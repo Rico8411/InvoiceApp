@@ -43,11 +43,7 @@ namespace InvoiceApp
 
         private int GetNextInvoiceNumber()
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
+            using (SqlConnection connection = Database.OpenConnection())
             {
                 connection.Open();
 
@@ -64,11 +60,7 @@ namespace InvoiceApp
 
         private void LoadProducts()
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
+            using (SqlConnection connection = Database.OpenConnection())
             {
                 connection.Open();
 
@@ -98,11 +90,7 @@ namespace InvoiceApp
         }
         private int InsertInvoice()
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
+            using (SqlConnection connection = Database.OpenConnection())
             {
                 connection.Open();
 
@@ -155,11 +143,7 @@ namespace InvoiceApp
             decimal unitPrice,
             decimal amount)
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
+            using (SqlConnection connection = Database.OpenConnection())
             {
                 connection.Open();
 
