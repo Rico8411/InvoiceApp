@@ -17,11 +17,7 @@ namespace InvoiceApp
 
         private void LoadProducts()
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
+            using (SqlConnection connection = Database.OpenConnection())
             {
                 SqlCommand command =
                     new SqlCommand("GetProducts", connection);

@@ -43,11 +43,7 @@ namespace InvoiceApp
 
         private int GetNextInvoiceNumber()
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
+            using (SqlConnection connection = Database.OpenConnection())
             {
                 connection.Open();
 
@@ -61,14 +57,10 @@ namespace InvoiceApp
                 return Convert.ToInt32(result);
             }
         }
-        
+
         private void LoadProducts()
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
+            using (SqlConnection connection = Database.OpenConnection())
             {
                 connection.Open();
 
@@ -93,16 +85,12 @@ namespace InvoiceApp
                     }
                 }
 
-                
+
             }
         }
         private int InsertInvoice()
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
+            using (SqlConnection connection = Database.OpenConnection())
             {
                 connection.Open();
 
@@ -155,11 +143,7 @@ namespace InvoiceApp
             decimal unitPrice,
             decimal amount)
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
+            using (SqlConnection connection = Database.OpenConnection())
             {
                 connection.Open();
 
@@ -191,7 +175,9 @@ namespace InvoiceApp
 
             txtTime.Text = DateTime.Now.ToString("HH:mm:ss");
             txtInvoiceNumber.Text = GetNextInvoiceNumber().ToString();
-           
+
+            CalculateTotalAmount();
+
         }
 
 
@@ -220,14 +206,14 @@ namespace InvoiceApp
 
         }
 
-        
+
 
         private void textBox2_TextChanged(object sender, EventArgs e)
         {
 
         }
 
-        
+
 
         private void btnExit_Click(object sender, EventArgs e)
         {
@@ -302,7 +288,7 @@ namespace InvoiceApp
             }
         }
 
-       
+
 
 
         private void txtDate_TextChanged(object sender, EventArgs e)
@@ -310,9 +296,16 @@ namespace InvoiceApp
 
         }
 
+        private bool skipNextCellClick;
         private void dgvInvoiceItems_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
+
+            if (skipNextCellClick)
+            {
+                skipNextCellClick = false;
+                return;
+            }
 
             string col = dgvInvoiceItems.Columns[e.ColumnIndex].Name;
 
@@ -338,6 +331,12 @@ namespace InvoiceApp
             {
                 row.Cells["colAmount"].Value = null;
             }
+            CalculateTotalAmount();
+        }
+
+        private void dgvInvoiceItems_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
+        {
+            CalculateTotalAmount();
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -381,7 +380,7 @@ namespace InvoiceApp
                         return true;
                     }
 
-                   
+
                     int newRowIndex = dgvInvoiceItems.NewRowIndex;
                     if (newRowIndex >= 0)
                     {
@@ -394,6 +393,86 @@ namespace InvoiceApp
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+
+        }
+        private void CalculateTotalAmount()
+        {
+            decimal total = 0;
+
+            foreach (DataGridViewRow row in dgvInvoiceItems.Rows)
+            {
+                if (row.IsNewRow)
+                    continue;
+
+                if (decimal.TryParse(
+                    Convert.ToString(row.Cells["colAmount"].Value),
+                    out decimal amount))
+                {
+                    total += amount;
+                }
+            }
+
+            txtTotalAmount.Text = total.ToString("N0");
+        }
+
+        private void txtTotalAmount_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+
+
+        private void dgvInvoiceItems_CellMouseDown(
+            object sender,
+            DataGridViewCellMouseEventArgs e)
+        {
+            skipNextCellClick = (e.Button == MouseButtons.Right);
+
+            if (e.Button == MouseButtons.Right && e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                dgvInvoiceItems.ClearSelection();
+
+                dgvInvoiceItems.Rows[e.RowIndex].Selected = true;
+
+                dgvInvoiceItems.CurrentCell =
+                    dgvInvoiceItems.Rows[e.RowIndex].Cells[e.ColumnIndex];
+
+                contextMenuStripItems.Show(
+                    Cursor.Position
+                );
+            }
+        }
+
+        private void contextMenuStripItems_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+
+        }
+
+        private void deleteItemToolStripMenuItem_Click(
+            object sender,
+            EventArgs e)
+        {
+            if (dgvInvoiceItems.CurrentRow == null ||
+                dgvInvoiceItems.CurrentRow.IsNewRow)
+            {
+                return;
+            }
+
+            DialogResult result = MessageBox.Show(
+                "آیا از حذف این کالا مطمئن هستید؟",
+                "تأیید حذف",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                dgvInvoiceItems.Rows.Remove(
+                    dgvInvoiceItems.CurrentRow
+                );
+
+                CalculateTotalAmount();
+            }
         }
     }
 }

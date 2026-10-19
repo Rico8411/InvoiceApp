@@ -19,13 +19,8 @@ namespace InvoiceApp
 
         private void LoadCustomers(string searchText = "")
         {
-            string connectionString =
-                "Server=.;Database=InvoiceAppDB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-            using (SqlConnection connection =
-                   new SqlConnection(connectionString))
-            using (SqlCommand command =
-                   new SqlCommand("SearchCustomers", connection))
+            using (SqlConnection connection = Database.OpenConnection())
+            using (SqlCommand command = Database.CreateStoredProcedureCommand(connection, "GetCustomers"))
             {
                 command.CommandType = CommandType.StoredProcedure;
 
