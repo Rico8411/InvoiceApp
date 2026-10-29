@@ -1,7 +1,11 @@
-﻿using System;
-using System.Windows.Forms;
+﻿using InvoiceApp.DataAccess;
+using InvoiceApp.Models;
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Windows.Forms;
+
 namespace InvoiceApp
 {
     public partial class FrmSelectProduct : Form
@@ -9,7 +13,8 @@ namespace InvoiceApp
         public int SelectedProductId { get; private set; }
         public string SelectedProductName { get; private set; }
         public decimal SelectedProductPrice { get; private set; }
-        private DataTable productsTable;
+
+        private List<Product> products;
         public FrmSelectProduct()
         {
             InitializeComponent();
@@ -17,22 +22,11 @@ namespace InvoiceApp
 
         private void LoadProducts()
         {
-            using (SqlConnection connection = Database.OpenConnection())
-            {
-                SqlCommand command =
-                    new SqlCommand("GetProducts", connection);
+            ProductRepository repository = new ProductRepository();
 
-                command.CommandType = CommandType.StoredProcedure;
+            products = repository.GetProducts();
 
-                SqlDataAdapter adapter =
-                    new SqlDataAdapter(command);
-
-                productsTable = new DataTable();
-
-                adapter.Fill(productsTable);
-
-                dgvProducts.DataSource = productsTable;
-            }
+            dgvProducts.DataSource = products;
 
             dgvProducts.AutoSizeColumnsMode =
                 DataGridViewAutoSizeColumnsMode.Fill;
@@ -90,16 +84,20 @@ namespace InvoiceApp
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
-            string text = txtSearch.Text.Trim()
-                .Replace("'", "''")
-                .Replace("[", "[[]")
-                .Replace("%", "[%]")
-                .Replace("*", "[*]");
+            string text = txtSearch.Text.Trim();
 
-            productsTable.DefaultView.RowFilter =
-                string.IsNullOrEmpty(text)
-                    ? ""
-                    : "Name LIKE '%" + text + "%'";
+            List<Product> filteredProducts = new List<Product>();
+
+            foreach (Product product in products)
+            {
+                if (product.Name.IndexOf(
+                    text, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    filteredProducts.Add(product);
+                }
+            }
+
+            dgvProducts.DataSource = filteredProducts;
         }
     }
 }

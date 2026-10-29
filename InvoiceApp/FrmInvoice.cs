@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
-using System.Windows.Forms;
+﻿using InvoiceApp.Models;
+using InvoiceApp.DataAccess;
+
+using System;
 using System.Globalization;
+using System.Windows.Forms;
+
 
 
 namespace InvoiceApp
@@ -16,8 +17,6 @@ namespace InvoiceApp
         }
 
         private int selectedCustomerId;
-
-
 
 
         private void SelectProduct(int rowIndex)
@@ -38,153 +37,41 @@ namespace InvoiceApp
             }
         }
 
-
-
-
-        private int GetNextInvoiceNumber()
+        private bool ValidateInvoiceItems()
         {
-            using (SqlConnection connection = Database.OpenConnection())
+            foreach (DataGridViewRow row in dgvInvoiceItems.Rows)
             {
-                connection.Open();
+                if (row.IsNewRow)
+                    continue;
 
-                SqlCommand command =
-                    new SqlCommand("GetNextInvoiceNumber", connection);
-
-                command.CommandType = CommandType.StoredProcedure;
-
-                object result = command.ExecuteScalar();
-
-                return Convert.ToInt32(result);
-            }
-        }
-
-        private void LoadProducts()
-        {
-            using (SqlConnection connection = Database.OpenConnection())
-            {
-                connection.Open();
-
-                SqlCommand command =
-                    new SqlCommand("GetProducts", connection);
-
-                command.CommandType = CommandType.StoredProcedure;
-
-                List<Product> products = new List<Product>();
-
-                using (SqlDataReader reader = command.ExecuteReader())
+                if (!int.TryParse(
+                    Convert.ToString(row.Cells["colProductCode"].Value),
+                    out int productId) || productId <= 0)
                 {
-                    while (reader.Read())
-                    {
-                        Product product = new Product(
-                            Convert.ToInt32(reader["Id"]),
-                            reader["Name"].ToString(),
-                            Convert.ToDecimal(reader["Price"])
-                        );
-
-                        products.Add(product);
-                    }
+                    MessageBox.Show("یکی از ردیف‌ها محصول معتبری ندارد.");
+                    return false;
                 }
 
+                if (!int.TryParse(
+                    Convert.ToString(row.Cells["colQuantity"].Value),
+                    out int quantity) || quantity <= 0)
+                {
+                    MessageBox.Show("تعداد کالا باید عددی بزرگ‌تر از صفر باشد.");
+                    return false;
+                }
 
+                if (!decimal.TryParse(
+                    Convert.ToString(row.Cells["colUnitPrice"].Value),
+                    out decimal unitPrice) || unitPrice <= 0)
+                {
+                    MessageBox.Show("قیمت کالا باید عددی بزرگ‌تر از صفر باشد.");
+                    return false;
+                }
             }
-        }
-        private int InsertInvoice()
-        {
-            using (SqlConnection connection = Database.OpenConnection())
-            {
-                connection.Open();
 
-                SqlCommand command =
-                    new SqlCommand("InsertInvoice", connection);
-
-                command.CommandType = CommandType.StoredProcedure;
-
-                command.Parameters.AddWithValue(
-                    "@InvoiceNumber",
-                    Convert.ToInt32(txtInvoiceNumber.Text));
-
-                PersianCalendar pc = new PersianCalendar();
-
-                string[] dateParts = txtDate.Text.Split('/');
-
-                int year = int.Parse(dateParts[0]);
-                int month = int.Parse(dateParts[1]);
-                int day = int.Parse(dateParts[2]);
-
-                DateTime invoiceDate = pc.ToDateTime(
-                    year, month, day, 0, 0, 0, 0
-                );
-
-                command.Parameters.Add("@InvoiceDate", SqlDbType.Date).Value =
-                    invoiceDate.Date;
-
-                command.Parameters.AddWithValue(
-                    "@CustomerName",
-                    txtCustomer.Text);
-
-                command.Parameters.AddWithValue(
-                    "@CustomerId",
-                    selectedCustomerId);
-
-                command.Parameters.AddWithValue(
-                    "@InvoiceTime",
-                    DateTime.Now.TimeOfDay);
-
-
-                object result = command.ExecuteScalar();
-
-                return Convert.ToInt32(result);
-            }
-        }
-        private void InsertInvoiceItem(
-            int invoiceId,
-            int productId,
-            int quantity,
-            decimal unitPrice,
-            decimal amount)
-        {
-            using (SqlConnection connection = Database.OpenConnection())
-            {
-                connection.Open();
-
-                SqlCommand command =
-                    new SqlCommand("InsertInvoiceItem", connection);
-
-                command.CommandType = CommandType.StoredProcedure;
-
-                command.Parameters.AddWithValue("@InvoiceId", invoiceId);
-                command.Parameters.AddWithValue("@ProductId", productId);
-                command.Parameters.AddWithValue("@Quantity", quantity);
-                command.Parameters.AddWithValue("@UnitPrice", unitPrice);
-                command.Parameters.AddWithValue("@Amount", amount);
-
-                command.ExecuteNonQuery();
-            }
+            return true;
         }
 
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-            PersianCalendar pc = new PersianCalendar();
-
-            DateTime now = DateTime.Now;
-
-            txtDate.Text =
-                $"{pc.GetYear(now):0000}/{pc.GetMonth(now):00}/{pc.GetDayOfMonth(now):00}";
-
-            txtTime.Text = DateTime.Now.ToString("HH:mm:ss");
-            txtInvoiceNumber.Text = GetNextInvoiceNumber().ToString();
-
-            CalculateTotalAmount();
-
-        }
-
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
 
         private void label1_Click(object sender, EventArgs e)
         {
@@ -201,19 +88,14 @@ namespace InvoiceApp
 
         }
 
-        private void label1_Click_2(object sender, EventArgs e)
+        private void txtTotalAmount_TextChanged(object sender, EventArgs e)
         {
 
         }
-
-
-
-        private void textBox2_TextChanged(object sender, EventArgs e)
+        private void txtDate_TextChanged(object sender, EventArgs e)
         {
 
         }
-
-
 
         private void btnExit_Click(object sender, EventArgs e)
         {
@@ -222,6 +104,10 @@ namespace InvoiceApp
 
         private void btnSave_Click(object sender, EventArgs e)
         {
+            if (!ValidateInvoiceItems())
+            {
+                return;
+            }
 
             if (selectedCustomerId <= 0)
             {
@@ -243,9 +129,31 @@ namespace InvoiceApp
             }
 
 
+
             try
             {
-                int invoiceId = InsertInvoice();
+                PersianCalendar pc = new PersianCalendar();
+
+                string[] dateParts = txtDate.Text.Split('/');
+
+                DateTime invoiceDate = pc.ToDateTime(
+                    int.Parse(dateParts[0]),
+                    int.Parse(dateParts[1]),
+                    int.Parse(dateParts[2]),
+                    0, 0, 0, 0
+                );
+
+                InvoiceRepository repository = new InvoiceRepository();
+
+                int invoiceId = repository.InsertInvoice(
+                    Convert.ToInt32(txtInvoiceNumber.Text),
+                    invoiceDate,
+                    DateTime.Now.TimeOfDay,
+                    txtCustomer.Text,
+                    selectedCustomerId
+                );
+
+                InvoiceItemRepository itemRepository = new InvoiceItemRepository();
 
                 foreach (DataGridViewRow row in dgvInvoiceItems.Rows)
                 {
@@ -256,7 +164,13 @@ namespace InvoiceApp
                     decimal unitPrice = Convert.ToDecimal(row.Cells["colUnitPrice"].Value);
                     decimal amount = Convert.ToDecimal(row.Cells["colAmount"].Value);
 
-                    InsertInvoiceItem(invoiceId, productId, quantity, unitPrice, amount);
+                    itemRepository.InsertInvoiceItem(
+                        invoiceId,
+                        productId,
+                        quantity,
+                        unitPrice,
+                        amount
+                    );
                 }
 
                 MessageBox.Show("فاکتور با موفقیت ثبت شد.");
@@ -269,8 +183,7 @@ namespace InvoiceApp
 
         private void txtCustomer_TextChanged(object sender, EventArgs e)
         {
-            FrmSelectCustomer frm = new FrmSelectCustomer();
-            frm.ShowDialog();
+            
         }
 
         private void txtCustomer_Click(object sender, EventArgs e)
@@ -279,11 +192,17 @@ namespace InvoiceApp
             {
                 if (frm.ShowDialog() == DialogResult.OK)
                 {
-                    txtCustomer.Text =
-                        frm.SelectedFirstName + " " + frm.SelectedLastName;
 
+                    if (frm.SelectedCustomer != null)
+                    {
+                        Customer customer = frm.SelectedCustomer;
 
-                    selectedCustomerId = frm.SelectedCustomerId;
+                        txtCustomer.Text =
+                            customer.FirstName + " " + customer.LastName;
+
+                        selectedCustomerId = customer.Id;
+                    }
+
                 }
             }
         }
@@ -291,10 +210,6 @@ namespace InvoiceApp
 
 
 
-        private void txtDate_TextChanged(object sender, EventArgs e)
-        {
-
-        }
 
         private bool skipNextCellClick;
         private void dgvInvoiceItems_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -307,32 +222,64 @@ namespace InvoiceApp
                 return;
             }
 
+            if (e.ColumnIndex < 0) return;
+
             string col = dgvInvoiceItems.Columns[e.ColumnIndex].Name;
 
             if (col == "colProductCode" || col == "colProductName")
                 SelectProduct(e.RowIndex);
         }
 
-        private void dgvInvoiceItems_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+
+        private void dgvInvoiceItems_CellValueChanged(object sender,DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0) return;
+            if (e.RowIndex < 0)
+                return;
 
             string col = dgvInvoiceItems.Columns[e.ColumnIndex].Name;
-            if (col != "colQuantity" && col != "colUnitPrice") return;
+
+            if (col != "colQuantity" && col != "colUnitPrice")
+                return;
 
             DataGridViewRow row = dgvInvoiceItems.Rows[e.RowIndex];
 
-            if (int.TryParse(Convert.ToString(row.Cells["colQuantity"].Value), out int quantity) &&
-                decimal.TryParse(Convert.ToString(row.Cells["colUnitPrice"].Value), out decimal unitPrice))
+            bool validQuantity = int.TryParse(
+                Convert.ToString(row.Cells["colQuantity"].Value),
+                out int quantity);
+
+            bool validPrice = decimal.TryParse(
+                Convert.ToString(row.Cells["colUnitPrice"].Value),
+                out decimal unitPrice);
+
+            bool validProductId = int.TryParse(
+                Convert.ToString(row.Cells["colProductCode"].Value),
+                out int productId);
+
+            if (!validProductId || productId <= 0)
             {
-                row.Cells["colAmount"].Value = quantity * unitPrice;
+                row.Cells["colAmount"].Value = null;
+                CalculateTotalAmount();
+                return;
+            }
+
+            if (validQuantity && validPrice)
+            {
+                InvoiceItem item = new InvoiceItem(
+                    productId,
+                    Convert.ToString(row.Cells["colProductName"].Value),
+                    quantity,
+                    unitPrice);
+
+                row.Cells["colAmount"].Value = item.Amount;
             }
             else
             {
                 row.Cells["colAmount"].Value = null;
             }
+
             CalculateTotalAmount();
         }
+
 
         private void dgvInvoiceItems_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
         {
@@ -415,10 +362,6 @@ namespace InvoiceApp
             txtTotalAmount.Text = total.ToString("N0");
         }
 
-        private void txtTotalAmount_TextChanged(object sender, EventArgs e)
-        {
-
-        }
 
 
 
@@ -443,10 +386,7 @@ namespace InvoiceApp
             }
         }
 
-        private void contextMenuStripItems_Opening(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-
-        }
+        
 
         private void deleteItemToolStripMenuItem_Click(
             object sender,
@@ -474,5 +414,24 @@ namespace InvoiceApp
                 CalculateTotalAmount();
             }
         }
+        private void FrmInvoice_Load(object sender, EventArgs e)
+        {
+            PersianCalendar pc = new PersianCalendar();
+            DateTime now = DateTime.Now;
+
+            txtDate.Text =
+                $"{pc.GetYear(now):0000}/{pc.GetMonth(now):00}/{pc.GetDayOfMonth(now):00}";
+
+            txtTime.Text = now.ToString("HH:mm:ss");
+
+            InvoiceRepository repository = new InvoiceRepository();
+
+            txtInvoiceNumber.Text =
+                repository.GetNextInvoiceNumber().ToString();
+
+            CalculateTotalAmount();
+        }
+
+
     }
 }

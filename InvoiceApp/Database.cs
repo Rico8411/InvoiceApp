@@ -32,5 +32,17 @@ namespace InvoiceApp
             command.CommandType = CommandType.StoredProcedure;
             return command;
         }
+        public static SqlParameter CreateDecimalParameter(
+            string name,
+            decimal value)
+        {
+            SqlParameter parameter = new SqlParameter(name, SqlDbType.Decimal);
+
+            parameter.Precision = 18;
+            parameter.Scale = 0;
+            parameter.Value = value;
+
+            return parameter;
+        }
     }
 }

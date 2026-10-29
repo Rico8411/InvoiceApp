@@ -1,16 +1,17 @@
-﻿using System;
+﻿using InvoiceApp.DataAccess;
+using System;
 using System.Windows.Forms;
-using System.Data;
-using System.Data.SqlClient;
+using InvoiceApp.Models;
+
+
 
 namespace InvoiceApp
 {
     public partial class FrmSelectCustomer : Form
     {
 
-        public int SelectedCustomerId { get; private set; }
-        public string SelectedFirstName { get; private set; }
-        public string SelectedLastName { get; private set; }
+        public Customer SelectedCustomer { get; private set; }
+
 
         public FrmSelectCustomer()
         {
@@ -19,31 +20,17 @@ namespace InvoiceApp
 
         private void LoadCustomers(string searchText = "")
         {
-            using (SqlConnection connection = Database.OpenConnection())
-            using (SqlCommand command = Database.CreateStoredProcedureCommand(connection, "GetCustomers"))
-            {
-                command.CommandType = CommandType.StoredProcedure;
+            CustomerRepository repository = new CustomerRepository();
 
-                command.Parameters.Add(
-                    "@SearchText", SqlDbType.NVarChar, 100
-                ).Value = searchText;
+            dgvCustomers.DataSource = repository.GetCustomers(searchText);
 
-                using (SqlDataAdapter adapter =
-                       new SqlDataAdapter(command))
-                {
-                    DataTable table = new DataTable();
-                    adapter.Fill(table);
+            dgvCustomers.Columns["Id"].Visible = false;
 
-                    dgvCustomers.DataSource = table;
-                    dgvCustomers.Columns["Id"].Visible = false;
+            dgvCustomers.Columns["FirstName"].HeaderText = "نام";
+            dgvCustomers.Columns["LastName"].HeaderText = "نام خانوادگی";
 
-                    dgvCustomers.Columns["FirstName"].HeaderText = "نام";
-                    dgvCustomers.Columns["LastName"].HeaderText = "نام خانوادگی";
-
-                    dgvCustomers.Columns["FirstName"].DisplayIndex = 0;
-                    dgvCustomers.Columns["LastName"].DisplayIndex = 1;
-                }
-            }
+            dgvCustomers.Columns["FirstName"].DisplayIndex = 0;
+            dgvCustomers.Columns["LastName"].DisplayIndex = 1;
         }
 
 
@@ -60,14 +47,16 @@ namespace InvoiceApp
                 return;
             }
 
-            SelectedCustomerId =
-                Convert.ToInt32(dgvCustomers.CurrentRow.Cells["Id"].Value);
+            int id = Convert.ToInt32(
+                dgvCustomers.CurrentRow.Cells["Id"].Value);
 
-            SelectedFirstName =
-                dgvCustomers.CurrentRow.Cells["FirstName"].Value.ToString();
+            string firstName =
+                dgvCustomers.CurrentRow.Cells["FirstName"].Value?.ToString() ?? "";
 
-            SelectedLastName =
+            string lastName =
                 dgvCustomers.CurrentRow.Cells["LastName"].Value?.ToString() ?? "";
+
+            SelectedCustomer = new Customer(id, firstName, lastName);
 
             this.DialogResult = DialogResult.OK;
             this.Close();
