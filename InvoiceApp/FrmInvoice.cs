@@ -25,16 +25,42 @@ namespace InvoiceApp
             {
                 if (frm.ShowDialog() == DialogResult.OK)
                 {
-                    DataGridViewRow row = dgvInvoiceItems.Rows[rowIndex];
+                    Product product = new Product(
+                        frm.SelectedProductId,
+                        frm.SelectedProductName,
+                        frm.SelectedProductPrice
+                    );
 
-                    row.Cells["colProductCode"].Value = frm.SelectedProductId;
-                    row.Cells["colProductName"].Value = frm.SelectedProductName;
-                    row.Cells["colUnitPrice"].Value = frm.SelectedProductPrice;
-
-                    dgvInvoiceItems.CurrentCell = row.Cells["colQuantity"];
-                    dgvInvoiceItems.BeginEdit(true);
+                    SetProductToRow(rowIndex, product);
                 }
             }
+        }
+
+        private void SearchProduct(int rowIndex, string searchText, bool searchByCode)
+        {
+            ProductRepository repository = new ProductRepository();
+
+            Product product = null;
+
+            if (searchByCode)
+            {
+                if (int.TryParse(searchText, out int productId))
+                {
+                    product = repository.GetProductById(productId);
+                }
+            }
+            else
+            {
+                product = repository.GetProductByName(searchText.Trim());
+            }
+
+            if (product == null)
+            {
+                MessageBox.Show("محصولی با این مشخصات پیدا نشد.");
+                return;
+            }
+
+            SetProductToRow(rowIndex, product);
         }
 
         private bool ValidateInvoiceItems()
@@ -70,6 +96,22 @@ namespace InvoiceApp
             }
 
             return true;
+        }
+
+        private void SetProductToRow(int rowIndex, Product product)
+        {
+            if (product == null)
+                return;
+
+            DataGridViewRow row = dgvInvoiceItems.Rows[rowIndex];
+
+            row.Cells["colProductCode"].Value = product.Id;
+            row.Cells["colProductName"].Value = product.Name;
+            row.Cells["colUnitPrice"].Value = product.Price;
+
+            row.Cells["colQuantity"].Selected = true;
+            dgvInvoiceItems.CurrentCell = row.Cells["colQuantity"];
+            dgvInvoiceItems.BeginEdit(true);
         }
 
 
@@ -212,9 +254,12 @@ namespace InvoiceApp
 
 
         private bool skipNextCellClick;
-        private void dgvInvoiceItems_CellClick(object sender, DataGridViewCellEventArgs e)
+        private void dgvInvoiceItems_CellClick(
+    object sender,
+    DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0) return;
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+                return;
 
             if (skipNextCellClick)
             {
@@ -222,14 +267,15 @@ namespace InvoiceApp
                 return;
             }
 
-            if (e.ColumnIndex < 0) return;
-
             string col = dgvInvoiceItems.Columns[e.ColumnIndex].Name;
 
             if (col == "colProductCode" || col == "colProductName")
+            {
                 SelectProduct(e.RowIndex);
+            }
         }
 
+        
 
         private void dgvInvoiceItems_CellValueChanged(object sender,DataGridViewCellEventArgs e)
         {
@@ -298,9 +344,15 @@ namespace InvoiceApp
                 string col = dgvInvoiceItems.Columns[cell.ColumnIndex].Name;
                 DataGridViewRow row = dgvInvoiceItems.Rows[cell.RowIndex];
 
-                if (col == "colProductCode" || col == "colProductName")
+                if (col == "colProductCode")
                 {
-                    SelectProduct(cell.RowIndex);
+                    string searchText = Convert.ToString(cell.Value).Trim();
+                    SearchProduct(cell.RowIndex, searchText, true);
+                }
+                else if (col == "colProductName")
+                {
+                    string searchText = Convert.ToString(cell.Value).Trim();
+                    SearchProduct(cell.RowIndex, searchText, false);
                 }
                 else if (col == "colQuantity")
                 {
@@ -432,6 +484,19 @@ namespace InvoiceApp
             CalculateTotalAmount();
         }
 
+        private void editItemToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (dgvInvoiceItems.CurrentCell == null)
+                return;
 
+            string col = dgvInvoiceItems.Columns[
+                dgvInvoiceItems.CurrentCell.ColumnIndex
+            ].Name;
+
+            if (col != "colProductCode" && col != "colProductName")
+                return;
+
+            dgvInvoiceItems.BeginEdit(true);
+        }
     }
 }

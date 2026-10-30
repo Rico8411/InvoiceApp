@@ -32,7 +32,57 @@ namespace InvoiceApp.DataAccess
                 }
             }
 
+
             return products;
+        }
+
+        public Product GetProductById(int productId)
+        {
+            using (SqlConnection connection = Database.OpenConnection())
+            using (SqlCommand command =
+                Database.CreateStoredProcedureCommand(
+                    connection, "GetProductById"))
+            {
+                command.Parameters.AddWithValue("@Id", productId);
+
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new Product(
+                            Convert.ToInt32(reader["Id"]),
+                            reader["Name"].ToString(),
+                            Convert.ToDecimal(reader["Price"])
+                        );
+                    }
+                }
+            }
+
+            return null;
+        }
+        public Product GetProductByName(string productName)
+        {
+            using (SqlConnection connection = Database.OpenConnection())
+            using (SqlCommand command =
+                Database.CreateStoredProcedureCommand(
+                    connection, "GetProductByName"))
+            {
+                command.Parameters.AddWithValue("@Name", productName);
+
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new Product(
+                            Convert.ToInt32(reader["Id"]),
+                            reader["Name"].ToString(),
+                            Convert.ToDecimal(reader["Price"])
+                        );
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

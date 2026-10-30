@@ -41,17 +41,18 @@
             this.lblTime = new System.Windows.Forms.Label();
             this.lalCustomer = new System.Windows.Forms.Label();
             this.dgvInvoiceItems = new System.Windows.Forms.DataGridView();
-            this.colProductCode = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colProductName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colQuantity = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colUnitPrice = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnExit = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
             this.txtTotalAmount = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.contextMenuStripItems = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.deleteItemToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editItemToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.colProductCode = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colProductName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colQuantity = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colUnitPrice = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvInvoiceItems)).BeginInit();
             this.contextMenuStripItems.SuspendLayout();
             this.SuspendLayout();
@@ -171,38 +172,6 @@
             this.dgvInvoiceItems.CellMouseDown += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvInvoiceItems_CellMouseDown);
             this.dgvInvoiceItems.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvInvoiceItems_CellValueChanged);
             // 
-            // colProductCode
-            // 
-            this.colProductCode.HeaderText = "کد کالا";
-            this.colProductCode.MinimumWidth = 6;
-            this.colProductCode.Name = "colProductCode";
-            // 
-            // colProductName
-            // 
-            this.colProductName.HeaderText = "نام کالا";
-            this.colProductName.MinimumWidth = 6;
-            this.colProductName.Name = "colProductName";
-            this.colProductName.ReadOnly = true;
-            // 
-            // colQuantity
-            // 
-            this.colQuantity.HeaderText = "تعداد";
-            this.colQuantity.MinimumWidth = 6;
-            this.colQuantity.Name = "colQuantity";
-            // 
-            // colUnitPrice
-            // 
-            this.colUnitPrice.HeaderText = "فی";
-            this.colUnitPrice.MinimumWidth = 6;
-            this.colUnitPrice.Name = "colUnitPrice";
-            // 
-            // colAmount
-            // 
-            this.colAmount.HeaderText = "مبلغ";
-            this.colAmount.MinimumWidth = 6;
-            this.colAmount.Name = "colAmount";
-            this.colAmount.ReadOnly = true;
-            // 
             // btnExit
             // 
             this.btnExit.Location = new System.Drawing.Point(464, 418);
@@ -246,17 +215,57 @@
             // 
             this.contextMenuStripItems.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.contextMenuStripItems.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.deleteItemToolStripMenuItem});
+            this.deleteItemToolStripMenuItem,
+            this.editItemToolStripMenuItem});
             this.contextMenuStripItems.Name = "contextMenuStripItems";
-            this.contextMenuStripItems.Size = new System.Drawing.Size(136, 28);
+            this.contextMenuStripItems.Size = new System.Drawing.Size(168, 52);
             // 
             // deleteItemToolStripMenuItem
             // 
             this.deleteItemToolStripMenuItem.Name = "deleteItemToolStripMenuItem";
             this.deleteItemToolStripMenuItem.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.deleteItemToolStripMenuItem.Size = new System.Drawing.Size(135, 24);
+            this.deleteItemToolStripMenuItem.Size = new System.Drawing.Size(167, 24);
             this.deleteItemToolStripMenuItem.Text = "حذف کالا";
             this.deleteItemToolStripMenuItem.Click += new System.EventHandler(this.deleteItemToolStripMenuItem_Click);
+            // 
+            // editItemToolStripMenuItem
+            // 
+            this.editItemToolStripMenuItem.Name = "editItemToolStripMenuItem";
+            this.editItemToolStripMenuItem.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.editItemToolStripMenuItem.Size = new System.Drawing.Size(167, 24);
+            this.editItemToolStripMenuItem.Text = "ویرایش دستی";
+            this.editItemToolStripMenuItem.Click += new System.EventHandler(this.editItemToolStripMenuItem_Click);
+            // 
+            // colProductCode
+            // 
+            this.colProductCode.HeaderText = "کد کالا";
+            this.colProductCode.MinimumWidth = 6;
+            this.colProductCode.Name = "colProductCode";
+            // 
+            // colProductName
+            // 
+            this.colProductName.HeaderText = "نام کالا";
+            this.colProductName.MinimumWidth = 6;
+            this.colProductName.Name = "colProductName";
+            // 
+            // colQuantity
+            // 
+            this.colQuantity.HeaderText = "تعداد";
+            this.colQuantity.MinimumWidth = 6;
+            this.colQuantity.Name = "colQuantity";
+            // 
+            // colUnitPrice
+            // 
+            this.colUnitPrice.HeaderText = "فی";
+            this.colUnitPrice.MinimumWidth = 6;
+            this.colUnitPrice.Name = "colUnitPrice";
+            // 
+            // colAmount
+            // 
+            this.colAmount.HeaderText = "مبلغ";
+            this.colAmount.MinimumWidth = 6;
+            this.colAmount.Name = "colAmount";
+            this.colAmount.ReadOnly = true;
             // 
             // FrmInvoice
             // 
@@ -302,15 +311,16 @@
         private System.Windows.Forms.DataGridView dgvInvoiceItems;
         private System.Windows.Forms.Button btnExit;
         private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.TextBox txtTotalAmount;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStripItems;
+        private System.Windows.Forms.ToolStripMenuItem deleteItemToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editItemToolStripMenuItem;
         private System.Windows.Forms.DataGridViewTextBoxColumn colProductCode;
         private System.Windows.Forms.DataGridViewTextBoxColumn colProductName;
         private System.Windows.Forms.DataGridViewTextBoxColumn colQuantity;
         private System.Windows.Forms.DataGridViewTextBoxColumn colUnitPrice;
         private System.Windows.Forms.DataGridViewTextBoxColumn colAmount;
-        private System.Windows.Forms.TextBox txtTotalAmount;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStripItems;
-        private System.Windows.Forms.ToolStripMenuItem deleteItemToolStripMenuItem;
     }
 }
 
